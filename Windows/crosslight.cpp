@@ -1,10 +1,5 @@
 #include <iostream>
 #include <windows.h>
-
-
-#define BACKGROUND_WHITE BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED
-#define FOREGROUND_WHITE FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED
-
 using namespace std;
 
 
