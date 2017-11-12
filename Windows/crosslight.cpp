@@ -155,8 +155,8 @@ int main()
     Console mainconsole;
     COORDprint(mainconsole.GetConsoleSize());
     mainconsole.SetGlobalBackgroundColor(Blue);
-    //mainconsole.SetGlobalTextColor(Yellow);
-    mainconsole.SetTextColor(Yellow);
+    mainconsole.SetGlobalTextColor(Yellow);
+    mainconsole.SetTextColor(Green);
     /*
         SetTextColor changes only future output
         while SetGlobalTextColor also changes all the previous
