@@ -45,7 +45,7 @@ class Console
             1 - some piece of shit (screen buffer handle)
             2 - coordinates using a COORD structure
         */
-        bool SetCursorPosition(short x, short y)
+        bool SetCursorPosition(short x = 0, short y = 0)
         {
             COORD coordDest;
             coordDest.X = x;
@@ -77,12 +77,11 @@ class Console
 
         /*
             function that changes text and background colors
-
             this function overwrites the previous value
             TO DO:
                 store previous value
         */
-        bool SetColor(ConsoleColor text, ConsoleColor background)
+        bool SetColor(ConsoleColor text = White, ConsoleColor background = Black)
         {
             return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|text));
         }
@@ -100,9 +99,10 @@ int main()
 {
     COORD coords;
     Console mainconsole;
-    ConsoleColor exTextColor = White;
+    ConsoleColor exTextColor = Blue;
     ConsoleColor exBackColor = Red;
     mainconsole.SetColor(exTextColor, exBackColor);
+    mainconsole.SetColor();
     COORDprint(mainconsole.GetConsoleSize());
     return 0;
 }
