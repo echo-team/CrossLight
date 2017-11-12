@@ -25,9 +25,10 @@ enum ConsoleColor
 
 class Console
 {
+    private:
         HANDLE hStdin, hStdout;
         CONSOLE_SCREEN_BUFFER_INFO csbInfo;
-
+        ConsoleColor currConsoleText = White, currConsoleBackground = Black;
     public:
         Console()
         {
@@ -76,16 +77,19 @@ class Console
         }
 
         /*
-            function that changes text and background colors
-            this function overwrites the previous value
-            TO DO:
-                store previous value
+            Next 2 functions set Color and Background of Console
         */
-        bool SetColor(ConsoleColor text = White, ConsoleColor background = Black)
+        bool SetTextColor(ConsoleColor text = White)
         {
-            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|text));
+            currConsoleText = text;
+            return SetConsoleTextAttribute(hStdout, (WORD)((currConsoleBackground<<4)|text));
         }
 
+        bool SetBackgroundColor(ConsoleColor background = Black)
+        {
+            currConsoleBackground = background;
+            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|currConsoleText));
+        }
 };
 
 //function for printing COORD structure
@@ -101,8 +105,8 @@ int main()
     Console mainconsole;
     ConsoleColor exTextColor = Blue;
     ConsoleColor exBackColor = Red;
-    mainconsole.SetColor(exTextColor, exBackColor);
-    mainconsole.SetColor();
+    mainconsole.SetTextColor(exTextColor);
+    mainconsole.SetBackgroundColor(exBackColor);
     COORDprint(mainconsole.GetConsoleSize());
     return 0;
 }
