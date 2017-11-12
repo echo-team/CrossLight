@@ -29,6 +29,12 @@ class Console
         HANDLE hStdin, hStdout;
         CONSOLE_SCREEN_BUFFER_INFO csbInfo;
         ConsoleColor currConsoleText = White, currConsoleBackground = Black;
+
+        char getASCII(int a)
+        {
+            return (a+55);
+        }
+
     public:
         Console()
         {
@@ -100,6 +106,40 @@ class Console
         {
             return currConsoleBackground;
         }
+
+        void SetGlobalBackgroundColor(ConsoleColor background = Black)
+        {
+            currConsoleBackground = background;
+            char color[16];
+            char tmpBack, tmpText;
+            if (currConsoleBackground>10)
+                tmpBack = currConsoleBackground + 55;
+            else
+                tmpBack = currConsoleBackground + 48;
+            if (currConsoleText>10)
+                tmpText = currConsoleText + 55;
+            else
+                tmpText = currConsoleText + 48;
+            sprintf(color, "color %c%c", tmpBack, tmpText);
+            const int NotUsed = system(color);
+        }
+
+        void SetGlobalTextColor(ConsoleColor text = White)
+        {
+            currConsoleText = text;
+            char color[16];
+            char tmpBack, tmpText;
+            if (currConsoleBackground>10)
+                tmpBack = currConsoleBackground + 55;
+            else
+                tmpBack = currConsoleBackground + 48;
+            if (currConsoleText>10)
+                tmpText = currConsoleText + 55;
+            else
+                tmpText = currConsoleText + 48;
+            sprintf(color, "color %c%c", tmpBack, tmpText);
+            const int NotUsed = system(color);
+        }
 };
 
 //function for printing COORD structure
@@ -113,11 +153,14 @@ int main()
 {
     COORD coords;
     Console mainconsole;
-    ConsoleColor exTextColor = Blue;
-    ConsoleColor exBackColor = Red;
-    mainconsole.SetTextColor(exTextColor);
-    mainconsole.SetBackgroundColor(exBackColor);
     COORDprint(mainconsole.GetConsoleSize());
+    mainconsole.SetGlobalBackgroundColor(Blue);
+    //mainconsole.SetGlobalTextColor(Yellow);
+    mainconsole.SetTextColor(Yellow);
+    /*
+        SetTextColor changes only future output
+        while SetGlobalTextColor also changes all the previous
+    */
     cout<<mainconsole.GetBackgroundColor();
     return 0;
 }
