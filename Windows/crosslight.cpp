@@ -90,6 +90,16 @@ class Console
             currConsoleBackground = background;
             return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|currConsoleText));
         }
+
+        ConsoleColor GetTextColor()
+        {
+            return currConsoleText;
+        }
+
+        ConsoleColor GetBackgroundColor()
+        {
+            return currConsoleBackground;
+        }
 };
 
 //function for printing COORD structure
@@ -108,5 +118,6 @@ int main()
     mainconsole.SetTextColor(exTextColor);
     mainconsole.SetBackgroundColor(exBackColor);
     COORDprint(mainconsole.GetConsoleSize());
+    cout<<mainconsole.GetBackgroundColor();
     return 0;
 }
