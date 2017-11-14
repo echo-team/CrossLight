@@ -28,6 +28,7 @@ class Console
     private:
         HANDLE hStdin, hStdout;
         CONSOLE_SCREEN_BUFFER_INFO csbInfo;
+        DWORD numOfAttrsWritten;
 
     public:
         Console()
@@ -133,6 +134,31 @@ class Console
             sprintf(color, "color %c%c", tmpBack, tmpText);
             const int NotUsed = system(color);
         }
+
+        /*
+            Next 2 functions change Text and Background Colors in 'length' cells starting from 'x','y';
+            If the function succeeds, the return value is nonzero. Else return value is zero.
+            Obviously, that function tries to change every cell, so if there is no text in the cell it still counts;
+            And also obviously that if you call for example 2-nd function after 1-st one; it will overwrite the previous attr with the one it gets from GetTextColor method;
+        */
+        bool ChangeTextColor(short x, short y, DWORD length, ConsoleColor text = White)
+        {
+            WORD attr = (WORD)((GetBackgroundColor()<<4)|text);
+            COORD a;
+            a.X = x;
+            a.Y = y;
+            return FillConsoleOutputAttribute(hStdout, attr, length, a, &numOfAttrsWritten);
+        }
+
+        bool ChangeBackColor(short x, short y, DWORD length, ConsoleColor background = Black)
+        {
+            WORD attr = (WORD)(background<<4|GetTextColor());
+            cout<<endl<<"WORD "<<attr<<endl;
+            COORD a;
+            a.X = x;
+            a.Y = y;
+            return FillConsoleOutputAttribute(hStdout, attr, length, a, &numOfAttrsWritten);
+        }
 };
 
 //function for printing COORD structure
@@ -147,12 +173,10 @@ int main()
     COORD coords;
     Console mainconsole;
     COORDprint(mainconsole.GetConsoleSize());
-    cout<<mainconsole.GetBackgroundColor()<<endl;
-    mainconsole.SetBackgroundColor(LightBlue);
-    cout<<endl;
-    mainconsole.SetTextColor(White);
-    cout<<mainconsole.GetTextColor()<<endl;
-    mainconsole.SetTextColor(LightGray);
-    cout<<mainconsole.GetTextColor()<<endl;
+    for (int i = 0; i < 15; i++)
+        cout<<i<<' ';
+    mainconsole.ChangeTextColor(6, 1, 8, Cyan);
+    mainconsole.ChangeBackColor(7, 1, 5, Red);
+    cout<<endl<<endl<<"END OF YOUR LIFE";
     return 0;
 }
