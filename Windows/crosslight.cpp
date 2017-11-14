@@ -153,11 +153,22 @@ class Console
         bool ChangeBackColor(short x, short y, DWORD length, ConsoleColor background = Black)
         {
             WORD attr = (WORD)(background<<4|GetTextColor());
-            cout<<endl<<"WORD "<<attr<<endl;
             COORD a;
             a.X = x;
             a.Y = y;
             return FillConsoleOutputAttribute(hStdout, attr, length, a, &numOfAttrsWritten);
+        }
+
+        /*
+            Next function prints 'length' long string of chars 'ch' from position 'x', 'y';
+            overwrites previous information, but takes it's TextAttributes;
+        */
+        bool ConsoleCharacterPrint(DWORD length, short x, short y, TCHAR ch = ' ')
+        {
+            COORD a;
+            a.X = x;
+            a.Y = y;
+            return FillConsoleOutputCharacter(hStdout, ch, length, a, &numOfAttrsWritten);
         }
 };
 
@@ -176,7 +187,8 @@ int main()
     for (int i = 0; i < 15; i++)
         cout<<i<<' ';
     mainconsole.ChangeTextColor(6, 1, 8, Cyan);
-    mainconsole.ChangeBackColor(7, 1, 5, Red);
+    mainconsole.ChangeBackColor(7, 1, 1, Red);
+    mainconsole.ConsoleCharacterPrint(7, 1, 1, 'e');
     cout<<endl<<endl<<"END OF YOUR LIFE";
     return 0;
 }
