@@ -28,12 +28,6 @@ class Console
     private:
         HANDLE hStdin, hStdout;
         CONSOLE_SCREEN_BUFFER_INFO csbInfo;
-        ConsoleColor currConsoleText = White, currConsoleBackground = Black;
-
-        char getASCII(int a)
-        {
-            return (a+55);
-        }
 
     public:
         Console()
@@ -49,8 +43,8 @@ class Console
             function that sets cursor position in console;
             if successfully accomplished than return a non-zero int, else returns zero
                 parameters:
-            1 - some piece of shit (screen buffer handle)
-            2 - coordinates using a COORD structure
+            1 - x-coordinate;
+            2 - y-coordinate;
         */
         bool SetCursorPosition(short x = 0, short y = 0)
         {
@@ -62,8 +56,6 @@ class Console
 
         /*
             function that returns current coordinates of Cursor in format: row, column; using COORD structure;
-                parameters:
-            1 - some piece of shit (screen buffer handle)
         */
         COORD GetCursorPosition()
         {
@@ -73,8 +65,6 @@ class Console
 
         /*
             function that returns current size of console window in format: number of rows, number of columns; using COORD structure;
-                parameters:
-            1 - some piece of shit (screen buffer handle)
         */
         COORD GetConsoleSize()
         {
@@ -83,60 +73,63 @@ class Console
         }
 
         /*
-            Next 2 functions set Color and Background of Console
+            Next 2 functions set Text and Background Colors of Console, which is used right after function call;
+            if successfully accomplished than return a non-zero int, else returns zero;
         */
         bool SetTextColor(ConsoleColor text = White)
         {
-            currConsoleText = text;
-            return SetConsoleTextAttribute(hStdout, (WORD)((currConsoleBackground<<4)|text));
+            return SetConsoleTextAttribute(hStdout, (WORD)((GetBackgroundColor()<<4)|text));
         }
 
         bool SetBackgroundColor(ConsoleColor background = Black)
         {
-            currConsoleBackground = background;
-            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|currConsoleText));
+            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|GetTextColor()));
         }
 
-        ConsoleColor GetTextColor()
+        /*
+            Next 2 functions return current Text and Background Colors of Console;
+        */
+        int GetTextColor()
         {
-            return currConsoleText;
+            GetConsoleScreenBufferInfo(hStdout, &csbInfo);
+            return(csbInfo.wAttributes % 16);
         }
 
-        ConsoleColor GetBackgroundColor()
+        int GetBackgroundColor()
         {
-            return currConsoleBackground;
+            GetConsoleScreenBufferInfo(hStdout, &csbInfo);
+            return(csbInfo.wAttributes >> 4);
         }
 
+        /*
+            Next 2 procedures set Text and Background Colors for the whole previous text and for the future use;
+        */
         void SetGlobalBackgroundColor(ConsoleColor background = Black)
         {
-            currConsoleBackground = background;
-            char color[16];
-            char tmpBack, tmpText;
-            if (currConsoleBackground>10)
-                tmpBack = currConsoleBackground + 55;
+            char tmpBack = GetBackgroundColor(), tmpText = GetTextColor(), color[16];
+            if (tmpBack > 10)
+                tmpBack += 55;
             else
-                tmpBack = currConsoleBackground + 48;
-            if (currConsoleText>10)
-                tmpText = currConsoleText + 55;
+                tmpBack += 48;
+            if (tmpText > 10)
+                tmpText += 55;
             else
-                tmpText = currConsoleText + 48;
+                tmpText += 48;
             sprintf(color, "color %c%c", tmpBack, tmpText);
             const int NotUsed = system(color);
         }
 
         void SetGlobalTextColor(ConsoleColor text = White)
         {
-            currConsoleText = text;
-            char color[16];
-            char tmpBack, tmpText;
-            if (currConsoleBackground>10)
-                tmpBack = currConsoleBackground + 55;
+            char tmpBack = GetBackgroundColor(), tmpText = GetTextColor(), color[16];
+            if (tmpBack > 10)
+                tmpBack += 55;
             else
-                tmpBack = currConsoleBackground + 48;
-            if (currConsoleText>10)
-                tmpText = currConsoleText + 55;
+                tmpBack += 48;
+            if (tmpText > 10)
+                tmpText += 55;
             else
-                tmpText = currConsoleText + 48;
+                tmpText += 48;
             sprintf(color, "color %c%c", tmpBack, tmpText);
             const int NotUsed = system(color);
         }
@@ -154,13 +147,12 @@ int main()
     COORD coords;
     Console mainconsole;
     COORDprint(mainconsole.GetConsoleSize());
-    mainconsole.SetGlobalBackgroundColor(Blue);
-    mainconsole.SetGlobalTextColor(Yellow);
-    mainconsole.SetTextColor(Green);
-    /*
-        SetTextColor changes only future output
-        while SetGlobalTextColor also changes all the previous
-    */
-    cout<<mainconsole.GetBackgroundColor();
+    cout<<mainconsole.GetBackgroundColor()<<endl;
+    mainconsole.SetBackgroundColor(LightBlue);
+    cout<<endl;
+    mainconsole.SetTextColor(White);
+    cout<<mainconsole.GetTextColor()<<endl;
+    mainconsole.SetTextColor(LightGray);
+    cout<<mainconsole.GetTextColor()<<endl;
     return 0;
 }
