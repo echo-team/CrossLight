@@ -28,7 +28,9 @@ class Console
     private:
         HANDLE hStdin, hStdout;
         CONSOLE_SCREEN_BUFFER_INFO csbInfo;
-        DWORD numOfAttrsWritten;
+        DWORD numOfAttrsWritten, numOfAttrsRead, numOfEventsRead;
+        WORD Attribute;
+        INPUT_RECORD inputBuffer;
 
     public:
         Console()
@@ -47,7 +49,7 @@ class Console
             1 - x-coordinate;
             2 - y-coordinate;
         */
-        bool SetCursorPosition(short x = 0, short y = 0)
+        BOOL SetCursorPosition(short x = 0, short y = 0)
         {
             COORD coordDest;
             coordDest.X = x;
@@ -77,12 +79,12 @@ class Console
             Next 2 functions set Text and Background Colors of Console, which is used right after function call;
             if successfully accomplished than return a non-zero int, else returns zero;
         */
-        bool SetTextColor(ConsoleColor text = White)
+        BOOL SetTextColor(ConsoleColor text = White)
         {
             return SetConsoleTextAttribute(hStdout, (WORD)((GetBackgroundColor()<<4)|text));
         }
 
-        bool SetBackgroundColor(ConsoleColor background = Black)
+        BOOL SetBackgroundColor(ConsoleColor background = Black)
         {
             return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|GetTextColor()));
         }
@@ -141,7 +143,7 @@ class Console
             Obviously, that function tries to change every cell, so if there is no text in the cell it still counts;
             And also obviously that if you call for example 2-nd function after 1-st one; it will overwrite the previous attr with the one it gets from GetTextColor method;
         */
-        bool ChangeTextColor(short x, short y, DWORD length, ConsoleColor text = White)
+        BOOL ChangeTextColor(short x, short y, DWORD length, ConsoleColor text = White)
         {
             WORD attr = (WORD)((GetBackgroundColor()<<4)|text);
             COORD a;
@@ -150,7 +152,7 @@ class Console
             return FillConsoleOutputAttribute(hStdout, attr, length, a, &numOfAttrsWritten);
         }
 
-        bool ChangeBackColor(short x, short y, DWORD length, ConsoleColor background = Black)
+        BOOL ChangeBackColor(short x, short y, DWORD length, ConsoleColor background = Black)
         {
             WORD attr = (WORD)(background<<4|GetTextColor());
             COORD a;
@@ -163,12 +165,41 @@ class Console
             Next function prints 'length' long string of chars 'ch' from position 'x', 'y';
             overwrites previous information, but takes it's TextAttributes;
         */
-        bool ConsoleCharacterPrint(DWORD length, short x, short y, TCHAR ch = ' ')
+        BOOL ConsoleCharacterPrint(DWORD length, short x, short y, TCHAR ch = ' ')
         {
             COORD a;
             a.X = x;
             a.Y = y;
             return FillConsoleOutputCharacter(hStdout, ch, length, a, &numOfAttrsWritten);
+        }
+
+        /*
+            Flushes the console input buffer. All input records currently in the input buffer are discarded.
+        */
+        BOOL FlushConsoleInput()
+        {
+            return FlushConsoleInputBuffer(hStdin);
+        }
+
+        /*
+            Read console cells attributes starting from 'x', 'y';
+            'length' many cells being read and written to Attribute;
+        */
+        BOOL ReadConsoleAttribute(DWORD length, short x, short y)
+        {
+            COORD a;
+            a.X = x;
+            a.Y = y;
+            return ReadConsoleOutputAttribute(hStdout, &Attribute, length, a, &numOfAttrsRead);
+        }
+
+        /*
+            Reads data from input buffer without removing it from the buffer;
+            'length' number of elements and writes it to 'inputBuffer'
+        */
+        BOOL PeekConsole(DWORD length)
+        {
+            return PeekConsoleInput(hStdin, &inputBuffer, length, &numOfEventsRead);
         }
 };
 
@@ -189,6 +220,6 @@ int main()
     mainconsole.ChangeTextColor(6, 1, 8, Cyan);
     mainconsole.ChangeBackColor(7, 1, 1, Red);
     mainconsole.ConsoleCharacterPrint(7, 1, 1, 'e');
-    cout<<endl<<endl<<"END OF YOUR LIFE";
+    cout<<endl<<endl<<"END OF YOUR LIFE"<<endl;
     return 0;
 }
