@@ -1,5 +1,7 @@
 #include <iostream>
+#define _WIN32_WINNT 0x0601
 #include <windows.h>
+#include <stdio.h>
 using namespace std;
 
 
@@ -31,6 +33,7 @@ class Console
         DWORD numOfAttrsWritten, numOfAttrsRead, numOfEventsRead;
         WORD Attribute;
         INPUT_RECORD inputBuffer;
+        COORD dimensions;
 
     public:
         Console()
@@ -49,7 +52,7 @@ class Console
             1 - x-coordinate;
             2 - y-coordinate;
         */
-        BOOL SetCursorPosition(short x = 0, short y = 0)
+        BOOL setCursorPosition(short x = 0, short y = 0)
         {
             COORD coordDest;
             coordDest.X = x;
@@ -60,7 +63,7 @@ class Console
         /*
             function that returns current coordinates of Cursor in format: row, column; using COORD structure;
         */
-        COORD GetCursorPosition()
+        COORD getCursorPosition()
         {
             GetConsoleScreenBufferInfo(hStdout, &csbInfo);
             return csbInfo.dwCursorPosition;
@@ -69,7 +72,7 @@ class Console
         /*
             function that returns current size of console window in format: number of rows, number of columns; using COORD structure;
         */
-        COORD GetConsoleSize()
+        COORD getSize()
         {
             GetConsoleScreenBufferInfo(hStdout, &csbInfo);
             return csbInfo.dwSize;
@@ -79,26 +82,26 @@ class Console
             Next 2 functions set Text and Background Colors of Console, which is used right after function call;
             if successfully accomplished than return a non-zero int, else returns zero;
         */
-        BOOL SetTextColor(ConsoleColor text = White)
+        BOOL setTextColor(ConsoleColor text = White)
         {
-            return SetConsoleTextAttribute(hStdout, (WORD)((GetBackgroundColor()<<4)|text));
+            return SetConsoleTextAttribute(hStdout, (WORD)((getBackgroundColor()<<4)|text));
         }
 
-        BOOL SetBackgroundColor(ConsoleColor background = Black)
+        BOOL setBackgroundColor(ConsoleColor background = Black)
         {
-            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|GetTextColor()));
+            return SetConsoleTextAttribute(hStdout, (WORD)((background<<4)|getTextColor()));
         }
 
         /*
             Next 2 functions return current Text and Background Colors of Console;
         */
-        int GetTextColor()
+        int getTextColor()
         {
             GetConsoleScreenBufferInfo(hStdout, &csbInfo);
             return(csbInfo.wAttributes % 16);
         }
 
-        int GetBackgroundColor()
+        int getBackgroundColor()
         {
             GetConsoleScreenBufferInfo(hStdout, &csbInfo);
             return(csbInfo.wAttributes >> 4);
@@ -107,33 +110,33 @@ class Console
         /*
             Next 2 procedures set Text and Background Colors for the whole previous text and for the future use;
         */
-        void SetGlobalBackgroundColor(ConsoleColor background = Black)
+        void setGlobalBackgroundColor(int background = Black)
         {
-            char tmpBack = GetBackgroundColor(), tmpText = GetTextColor(), color[16];
-            if (tmpBack > 10)
-                tmpBack += 55;
+            char tmpText = getTextColor(), color[16];
+            if (background > 10)
+                background += 55;
             else
-                tmpBack += 48;
+                background += 48;
             if (tmpText > 10)
                 tmpText += 55;
             else
                 tmpText += 48;
-            sprintf(color, "color %c%c", tmpBack, tmpText);
+            sprintf(color, "color %c%c", background, tmpText);
             const int NotUsed = system(color);
         }
 
-        void SetGlobalTextColor(ConsoleColor text = White)
+        void setGlobalTextColor(int text = White)
         {
-            char tmpBack = GetBackgroundColor(), tmpText = GetTextColor(), color[16];
+            char tmpBack = getBackgroundColor(), color[16];
             if (tmpBack > 10)
                 tmpBack += 55;
             else
                 tmpBack += 48;
-            if (tmpText > 10)
-                tmpText += 55;
+            if (text > 10)
+                text += 55;
             else
-                tmpText += 48;
-            sprintf(color, "color %c%c", tmpBack, tmpText);
+                text += 48;
+            sprintf(color, "color %c%c", tmpBack, text);
             const int NotUsed = system(color);
         }
 
@@ -141,20 +144,20 @@ class Console
             Next 2 functions change Text and Background Colors in 'length' cells starting from 'x','y';
             If the function succeeds, the return value is nonzero. Else return value is zero.
             Obviously, that function tries to change every cell, so if there is no text in the cell it still counts;
-            And also obviously that if you call for example 2-nd function after 1-st one; it will overwrite the previous attr with the one it gets from GetTextColor method;
+            And also obviously that if you call for example 2-nd function after 1-st one; it will overwrite the previous attr with the one it gets from getTextColor method;
         */
-        BOOL ChangeTextColor(short x, short y, DWORD length, ConsoleColor text = White)
+        BOOL changeTextColor(short x, short y, DWORD length, ConsoleColor text = White)
         {
-            WORD attr = (WORD)((GetBackgroundColor()<<4)|text);
+            WORD attr = (WORD)((getBackgroundColor()<<4)|text);
             COORD a;
             a.X = x;
             a.Y = y;
             return FillConsoleOutputAttribute(hStdout, attr, length, a, &numOfAttrsWritten);
         }
 
-        BOOL ChangeBackColor(short x, short y, DWORD length, ConsoleColor background = Black)
+        BOOL changeBackgroundColor(short x, short y, DWORD length, ConsoleColor background = Black)
         {
-            WORD attr = (WORD)(background<<4|GetTextColor());
+            WORD attr = (WORD)(background<<4|getTextColor());
             COORD a;
             a.X = x;
             a.Y = y;
@@ -165,7 +168,7 @@ class Console
             Next function prints 'length' long string of chars 'ch' from position 'x', 'y';
             overwrites previous information, but takes it's TextAttributes;
         */
-        BOOL ConsoleCharacterPrint(DWORD length, short x, short y, TCHAR ch = ' ')
+        BOOL characterPrint(DWORD length, short x, short y, TCHAR ch = ' ')
         {
             COORD a;
             a.X = x;
@@ -176,7 +179,7 @@ class Console
         /*
             Flushes the console input buffer. All input records currently in the input buffer are discarded.
         */
-        BOOL FlushConsoleInput()
+        BOOL flushInput()
         {
             return FlushConsoleInputBuffer(hStdin);
         }
@@ -185,21 +188,73 @@ class Console
             Read console cells attributes starting from 'x', 'y';
             'length' many cells being read and written to Attribute;
         */
-        BOOL ReadConsoleAttribute(DWORD length, short x, short y)
+        int readTextAttribute(DWORD length, short x, short y)
         {
             COORD a;
             a.X = x;
             a.Y = y;
-            return ReadConsoleOutputAttribute(hStdout, &Attribute, length, a, &numOfAttrsRead);
+            ReadConsoleOutputAttribute(hStdout, &Attribute, length, a, &numOfAttrsRead);
+            return(Attribute%16);
+        }
+
+        int readBackgroundAttribute(DWORD length, short x, short y)
+        {
+            COORD a;
+            a.X = x;
+            a.Y = y;
+            ReadConsoleOutputAttribute(hStdout, &Attribute, length, a, &numOfAttrsRead);
+            return(Attribute>>4);
         }
 
         /*
             Reads data from input buffer without removing it from the buffer;
             'length' number of elements and writes it to 'inputBuffer'
         */
-        BOOL PeekConsole(DWORD length)
+        BOOL peekInput(DWORD length)
         {
             return PeekConsoleInput(hStdin, &inputBuffer, length, &numOfEventsRead);
+        }
+
+        /*
+            Sets the display mode of the specified console screen buffer.
+        */
+        BOOL setFullscreenMode()
+        {
+            return SetConsoleDisplayMode(hStdout, 1, &dimensions);
+        }
+
+        BOOL setWindowedMode()
+        {
+            return SetConsoleDisplayMode(hStdout, 2, &dimensions);
+        }
+
+        /*
+            Takes between 2 and 4 parameters in order:
+                right border of window
+                bottom border of window
+                left border of window(optional)
+                top border of window(optional)
+            And sets Window Size of the current Screen Buffer
+        */
+        BOOL setWindowSize(short right, short bottom, short left = 0, short top = 0)
+        {
+            SMALL_RECT rect;
+            if (left == 0 && top == 0)
+            {
+                GetConsoleScreenBufferInfo(hStdout, &csbInfo);
+                rect.Left = csbInfo.srWindow.Left;
+                rect.Top = csbInfo.srWindow.Top;
+                rect.Right = csbInfo.srWindow.Left + right;
+                rect.Bottom = csbInfo.srWindow.Top + bottom;
+            }
+            else
+            {
+                rect.Left = left;
+                rect.Right = right;
+                rect.Bottom = bottom;
+                rect.Top = top;
+            }
+            SetConsoleWindowInfo(hStdout, 1, &rect);
         }
 };
 
@@ -214,12 +269,15 @@ int main()
 {
     COORD coords;
     Console mainconsole;
-    COORDprint(mainconsole.GetConsoleSize());
+    COORDprint(mainconsole.getSize());
     for (int i = 0; i < 15; i++)
         cout<<i<<' ';
-    mainconsole.ChangeTextColor(6, 1, 8, Cyan);
-    mainconsole.ChangeBackColor(7, 1, 1, Red);
-    mainconsole.ConsoleCharacterPrint(7, 1, 1, 'e');
+    mainconsole.changeTextColor(6, 1, 8, Cyan);
+    mainconsole.changeBackgroundColor(7, 1, 1, Cyan);
+    mainconsole.characterPrint(7, 1, 1, 'e');
+    mainconsole.setFullscreenMode();
+    cin.get();
+    mainconsole.setWindowedMode();
     cout<<endl<<endl<<"END OF YOUR LIFE"<<endl;
     return 0;
 }
